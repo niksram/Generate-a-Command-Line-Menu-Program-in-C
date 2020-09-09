@@ -1,11 +1,14 @@
-output.txt : output.out inputsequence.txt
-	./output.out < inputsequence.txt > output.txt
+patternfile=menu.dat
+menuinput=inputsequence.txt
+
+output.txt : output.out $(menuinput)
+	./output.out < $(menuinput) > output.txt
 
 output.out : output.c
 	gcc -o output.out output.c
 
-output.c : menugen.out menu.dat
-	./menugen.out < menu.dat > output.c    
+output.c : menugen.out $(patternfile)
+	./menugen.out < $(patternfile) > output.c    
 
 menugen.out : A1_PES1201801972.c
 	gcc -o menugen.out A1_PES1201801972.c
