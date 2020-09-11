@@ -100,7 +100,7 @@ char *coremenu_gen(char *s, long int depth) // the main recursive function which
     coremenu_prolog_gen(depth);       // prolog
     long int cases = 1;               // indicates the current switch case
     case_prolog_gen(s, cases, depth); // initially supplied with a line which is treated as the first case
-    strcpy(s, "\0");
+    memset(s,0,(MAX+1)*sizeof(char));
     fgets(s, MAX, stdin);                           // reads the next line
     long int depth_check = depth_checker(s, depth); // finds the relative depth of the input line w.r.t to the current depth
     while (depth_check > 0)                         // while its not an ancestor or not a blank string
@@ -113,7 +113,7 @@ char *coremenu_gen(char *s, long int depth) // the main recursive function which
         {
             case_epilog_gen(s, cases++, depth); // close the previous switch case
             case_prolog_gen(s, cases, depth);   // open the new switch case
-            strcpy(s, "\0");
+            memset(s,0,(MAX+1)*sizeof(char));
             fgets(s, MAX, stdin); // read the next input
         }
         depth_check = depth_checker(s, depth); // check depth

@@ -1,5 +1,6 @@
-patternfile=menu.dat
-menuinput=inputsequence.txt
+patternfile=test.dat
+menuinput=test.txt
+cfile=A1_PES1201801972_Tree.c
 
 output.txt : output.out $(menuinput)
 	./output.out < $(menuinput) > output.txt
@@ -10,8 +11,8 @@ output.out : output.c
 output.c : menugen.out $(patternfile)
 	./menugen.out < $(patternfile) > output.c    
 
-menugen.out : A1_PES1201801972.c
-	gcc -o menugen.out A1_PES1201801972.c
+menugen.out : $(cfile)
+	gcc -o menugen.out $(cfile)
 
 clean:
 	rm -f menugen.out output.out
