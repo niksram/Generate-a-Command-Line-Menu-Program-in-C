@@ -6,8 +6,8 @@
 typedef struct Node // node of the tree
 {
     struct Node *sibling; // sibling pointer
-    struct Node *child; // child pointer
-    char *word; // string is stored in this address
+    struct Node *child;   // child pointer
+    char *word;           // string is stored in this address
 } Node;
 
 typedef struct Tree // structure whicch holds the pointer to the root of the tree
@@ -40,13 +40,14 @@ void case_prolog_gen(Node *, long int, long int); // prolog of switch case of pr
 void case_epilog_gen(Node *, long int);           // epilog of switch case of program
 void tabber(long int, char *);                    // given a number and pointer to string, it prints tabs and then the string
 void function_gen(char *, long int, long int);    // generates function for each level of the menu
-// void tree_print(Node* ,long int ); // printd the tree
+void tree_print(Node *, long int);                // printd the tree
 
 int main()
 {
     Tree *tree = tree_init(); // initialses the tree
     prolog_gen();
     tree_maker(tree); // generate the tree as well as functions
+    tree_print(tree->root, 0);
     main_prolog_gen();
     coremenu_gen(tree); // generate the core menu code from the tree
     epilog_gen();
@@ -73,8 +74,8 @@ Node *node_create(char *s) // GPT is stores as a binary tree in the form of node
 void tree_maker(Tree *tree)
 {
     char s[MAX + 1];
-    fgets(s, MAX, stdin); // gets the first input
-    tree_recursive_maker(s, tree->root, 0);
+    if (fgets(s, MAX + 1, stdin)) // gets the first input
+        tree_recursive_maker(s, tree->root, 0);
 }
 
 void function_gen(char *s, long int depth, long int cases) // generates a function with 'printf' of the given string
@@ -87,10 +88,10 @@ void function_gen(char *s, long int depth, long int cases) // generates a functi
 }
 
 int depth_checker(char *s, long int depth) // its used to find the relative depth of the input string w.r.t to the given depth
-{// **convention used here -1: ANCESTOR, 0: ERROR, 1: SIBLING, 2: CHILD
-    if (s) // if s not NULL
+{                                          // **convention used here -1: ANCESTOR, 0: ERROR, 1: SIBLING, 2: CHILD
+    if (s)                                 // if s not NULL
     {
-        if (!strlen(s)) // if len=0, then its an ancestor
+        if (!strlen(s) || s[0] == '\n') // if len=0, then its an ancestor
         {
             return -1;
         }
@@ -113,7 +114,7 @@ char *tree_recursive_maker(char *s, Node *parent, long int depth) // the crucial
     Node *node = parent->child = node_create(s);    //  node is created given a string as the child of the given node
     function_gen(s, depth, cases++);                // function to print the respective string is generated
     memset(s, 0, (MAX + 1) * sizeof(char));         // clears residual string
-    fgets(s, MAX, stdin);                           // input string
+    fgets(s, MAX + 1, stdin);                       // input string
     long int depth_check = depth_checker(s, depth); // find out the relative heirarchy of the input string with current depth
     while (depth_check > 0)                         // if input string is not an ancestor to the current depth (either sibling or child)
     {
@@ -126,7 +127,7 @@ char *tree_recursive_maker(char *s, Node *parent, long int depth) // the crucial
             node = node->sibling = node_create(s);  // create a new node and make it its sibling
             function_gen(s, depth, cases++);        // generate function
             memset(s, 0, (MAX + 1) * sizeof(char)); // cear residual string
-            fgets(s, MAX, stdin);                   // input string
+            fgets(s, MAX + 1, stdin);               // input string
         }
         depth_check = depth_checker(s, depth); // check depth again
     }
@@ -258,16 +259,17 @@ void tree_recursive_trasher(Node *node) // recusrive function used to free the t
     }
 }
 
-// void tree_print(Node* node,long int depth) // prints the tree, used for the purpose of debugging
-// {
-//     while(node)
-//     {
-//         tabber(depth,node->word);
-//         printf("\n");
-//         if(node->child)
-//         {
-//             tree_print(node->child,depth+1);
-//         }
-//         node=node->sibling;
-//     }
-// }
+void tree_print(Node *node, long int depth) // prints the tree, used for the purpose of debugging
+{
+    while (node)
+    {
+        printf("// ");
+        tabber(depth, node->word);
+        printf("\n");
+        if (node->child)
+        {
+            tree_print(node->child, depth + 1);
+        }
+        node = node->sibling;
+    }
+}
