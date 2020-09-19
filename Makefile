@@ -1,5 +1,5 @@
-patternfile=test.dat
-menuinput=test.txt
+patternfile=menu.dat
+menuinput=inputsequence.txt
 cfile=A1_PES1201801972_Tree.c
 
 output.txt : output.out $(menuinput)

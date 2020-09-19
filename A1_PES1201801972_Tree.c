@@ -1,13 +1,21 @@
+// S NIKHIL RAM
+// PES1201801972
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #define MAX 1024 // the maximum length of the string can be atered here, default 1024 is set here
 
+typedef struct Object //
+{
+    char *word;
+    long int func_number;
+} Object;
+
 typedef struct Node // node of the tree
 {
     struct Node *sibling; // sibling pointer
     struct Node *child;   // child pointer
-    char *word;           // string is stored in this address
+    Object *object;       // string is stored in this address
 } Node;
 
 typedef struct Tree // structure whicch holds the pointer to the root of the tree
@@ -17,17 +25,17 @@ typedef struct Tree // structure whicch holds the pointer to the root of the tre
 
 //Tree Functions
 
-Tree *tree_init();                                    // initialise tree
-Node *node_create(char *s);                           // create node
-void tree_maker(Tree *);                              // generate tree as well as print functions
-char *tree_recursive_maker(char *, Node *, long int); // recurive function used inside 'tree_maker()'
-int depth_checker(char *, long int);                  // checks the relative depth of the input string with given depth
+Tree *tree_init();                                                // initialise tree
+Node *node_create(char *s, long int num);                         // create node
+void tree_maker(Tree *);                                          // generate tree as well as print functions
+char *tree_recursive_maker(char *, Node *, long int, long int *); // recurive function used inside 'tree_maker()'
+int depth_checker(char *, long int);                              // checks the relative depth of the input string with given depth
 char *string_strip(char *);
 void tree_trasher(Tree *);           // clears tree by freeing the nodes
 void tree_recursive_trasher(Node *); // used inside 'tree_trasher'
 void free_node(Node *);              // free a single node
 
-//Generate Function
+//Code Generating Function
 
 void prolog_gen();                                // '#include' of the program are printed
 void main_prolog_gen();                           // prints 'int main()' for the generated program
@@ -39,15 +47,20 @@ void coremenu_epilog_gen(long int);               // epilog of main menu snippet
 void case_prolog_gen(Node *, long int, long int); // prolog of switch case of program
 void case_epilog_gen(Node *, long int);           // epilog of switch case of program
 void tabber(long int, char *);                    // given a number and pointer to string, it prints tabs and then the string
-void function_gen(char *, long int, long int);    // generates function for each level of the menu
-void tree_print(Node *, long int);                // printd the tree
+void function_gen(Object *);  // generates function for each level of the menu
+//void tree_print(Node *, long int);                // prints the tree
+
+//Object Functions
+
+Object *object_maker(char *, long int);// This function is used to create an object
+void free_object(Object *);// this function is used to free the memory used by an object structure
 
 int main()
 {
     Tree *tree = tree_init(); // initialses the tree
     prolog_gen();
     tree_maker(tree); // generate the tree as well as functions
-    tree_print(tree->root, 0);
+    //tree_print(tree->root, 0); // uncomment this as well as the functions to print the tree
     main_prolog_gen();
     coremenu_gen(tree); // generate the core menu code from the tree
     epilog_gen();
@@ -58,33 +71,33 @@ int main()
 Tree *tree_init()
 {
     Tree *tree = (Tree *)malloc(sizeof(Tree)); // memory allocated
-    tree->root = node_create(NULL);            // root node is created by default here
+    tree->root = node_create(NULL, 0);         // root node is created by default here
     return tree;
 }
 
-Node *node_create(char *s) // GPT is stores as a binary tree in the form of nodes pointing to its child as well as siblings
+Node *node_create(char *s, long int num) // GPT is stores as a binary tree in the form of nodes pointing to its child as well as siblings
 {
     Node *node = (Node *)malloc(sizeof(Node));
     node->child = NULL;
     node->sibling = NULL;
-    node->word = s ? string_strip(s) : NULL; // the string which must be printed in the function is dtored here
+    node->object = object_maker(s, num);
+    // the string which must be printed in the function is stored here along with the function call
     return node;
 }
 
 void tree_maker(Tree *tree)
 {
     char s[MAX + 1];
+    long int num = 1;
     if (fgets(s, MAX + 1, stdin)) // gets the first input
-        tree_recursive_maker(s, tree->root, 0);
+        tree_recursive_maker(s, tree->root, 0, &num);
 }
 
-void function_gen(char *s, long int depth, long int cases) // generates a function with 'printf' of the given string
+void function_gen(Object *object) // generates a function with 'printf' of the given string
 {
-    char *strip = string_strip(s);
-    printf("void function_%s_%ld_%ld()\n{\n", strip, depth, cases); // naming scheme is function_the-string_depth_cases. hence same strings at different levels don't interfere
-    printf("\tprintf(\"%s\\n\");\n", strip);
+    printf("void function_%ld()\n{\n", object->func_number); // naming scheme is function_(func_number). The reason is explained in detail in the readme file.
+    printf("\tprintf(\"%s\\n\");\n", object->word);
     printf("}\n\n");
-    free(strip);
 }
 
 int depth_checker(char *s, long int depth) // its used to find the relative depth of the input string w.r.t to the given depth
@@ -108,26 +121,25 @@ int depth_checker(char *s, long int depth) // its used to find the relative dept
     return 0;
 }
 
-char *tree_recursive_maker(char *s, Node *parent, long int depth) // the crucial function which is used to generate the tree recursively
+char *tree_recursive_maker(char *s, Node *parent, long int depth, long int *fnum) // the crucial function which is used to generate the tree recursively
 {
-    long int cases = 1;
-    Node *node = parent->child = node_create(s);    //  node is created given a string as the child of the given node
-    function_gen(s, depth, cases++);                // function to print the respective string is generated
-    memset(s, 0, (MAX + 1) * sizeof(char));         // clears residual string
-    fgets(s, MAX + 1, stdin);                       // input string
-    long int depth_check = depth_checker(s, depth); // find out the relative heirarchy of the input string with current depth
-    while (depth_check > 0)                         // if input string is not an ancestor to the current depth (either sibling or child)
+    Node *node = parent->child = node_create(s, (*fnum)++); //  node is created given a string as the child of the given node
+    function_gen(node->object);             // function to print the respective string is generated
+    memset(s, 0, (MAX + 1) * sizeof(char));                 // clears residual string
+    fgets(s, MAX + 1, stdin);                               // input string
+    long int depth_check = depth_checker(s, depth);         // find out the relative heirarchy of the input string with current depth
+    while (depth_check > 0)                                 // if input string is not an ancestor to the current depth (either sibling or child)
     {
         if (depth_check == 2) // if input string must be a child
         {
-            s = tree_recursive_maker(s, node, depth + 1); // recurively call the function again passing this node as the parent
+            s = tree_recursive_maker(s, node, depth + 1, fnum); // recurively call the function again passing this node as the parent
         }
         else // if input string must be a sibling
         {
-            node = node->sibling = node_create(s);  // create a new node and make it its sibling
-            function_gen(s, depth, cases++);        // generate function
-            memset(s, 0, (MAX + 1) * sizeof(char)); // cear residual string
-            fgets(s, MAX + 1, stdin);               // input string
+            node = node->sibling = node_create(s, (*fnum)++); // create a new node and make it its sibling
+            function_gen(node->object);       // generate function
+            memset(s, 0, (MAX + 1) * sizeof(char));           // cear residual string
+            fgets(s, MAX + 1, stdin);                         // input string
         }
         depth_check = depth_checker(s, depth); // check depth again
     }
@@ -177,7 +189,7 @@ void case_prolog_gen(Node *node, long int depth, long int cases) // prints the s
     printf("case %lu :\n", cases);
     tabber(depth * 3 + 3, "{\n");
     tabber(depth * 3 + 4, "");
-    printf("function_%s_%ld_%ld();\n", node->word, depth, cases); //function call
+    printf("function_%ld();\n", node->object->func_number); //function call
 }
 
 void case_epilog_gen(Node *node, long int depth) // prints the switch case epilog snippet
@@ -235,7 +247,7 @@ void tabber(long int value, char *s) // given number n and a string, it prints n
 
 void free_node(Node *node) // free individual node
 {
-    free(node->word);
+    free_object(node->object);
     free(node);
 }
 
@@ -259,17 +271,31 @@ void tree_recursive_trasher(Node *node) // recusrive function used to free the t
     }
 }
 
-void tree_print(Node *node, long int depth) // prints the tree, used for the purpose of debugging
+Object *object_maker(char *s, long int num) // creates the object structure
 {
-    while (node)
-    {
-        printf("// ");
-        tabber(depth, node->word);
-        printf("\n");
-        if (node->child)
-        {
-            tree_print(node->child, depth + 1);
-        }
-        node = node->sibling;
-    }
+    Object *object = (Object *)malloc(sizeof(Object)); // memory allocation
+    object->word = s ? string_strip(s) : NULL; // the word pointer store NULL if the s is NULL, or else its stripped of endlines and tabs
+    object->func_number = num; // stores the function number as generated
+    return object;
 }
+
+void free_object(Object *object) // frees the memory by the object structure
+{
+    free(object->word); // free the object string
+    free(object); // free the object
+}
+
+// void tree_print(Node *node, long int depth) // prints the tree, used for the purpose of debugging
+// {
+//     while (node)
+//     {
+//         printf("// ");
+//         tabber(depth, node->object->word);
+//         printf("\n");
+//         if (node->child)
+//         {
+//             tree_print(node->child, depth + 1);
+//         }
+//         node = node->sibling;
+//     }
+// }
