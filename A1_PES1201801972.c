@@ -13,15 +13,54 @@ void case_prolog_gen(char *, long int, long int); // prolog for a switch case
 void case_epilog_gen(char *, long int, long int); // epilog for a switch case
 void tabber(long int, char *);                    // function to add tabs along with the string while streaming output
 char *string_strip(char *);                       // to strip string from tabs and endlines
+void print_code(char *, long int);                //prints the code by seperating based on semicolon (;)
 
 int main()
 {
-    prolog_gen();
     char s[MAX + 1];
-    fgets(s, MAX, stdin);
-    coremenu_gen(s, 0);
-    epilog_gen();
+    int empty_code = 1;
+    while (fgets(s, MAX + 1, stdin)) // gets the first input
+    {
+        if (s[0] == '#')
+        {
+            printf("%s", s);
+        }
+        else
+        {
+            empty_code = 0;
+            prolog_gen();
+            do
+            {
+                coremenu_gen(s, 0);
+            } while (fgets(s, MAX + 1, stdin));
+            epilog_gen();
+        }
+    }
+    if (empty_code)
+    {
+        prolog_gen();
+        epilog_gen();
+    }
     return 0;
+}
+
+void print_code(char *input, long int depth)
+{
+    char s[MAX + 1];
+    long int count = 0;
+    while (*input != '\0')
+    {
+        if (*input == '\n')
+            s[count++] = '\\';
+        s[count++] = *input;
+        if (*input == ';')
+        {
+            s[count] = '\n';
+            tabber(depth * 3 + 4, s);
+            count = 0;
+        }
+        input++;
+    }
 }
 
 char *string_strip(char *s)
@@ -44,7 +83,7 @@ int depth_checker(char *s, long int depth)
 { // 1 - sibling, 2 - child, -1 - ancestor (parent/parent's parent and so on) w.r.t the given depth
     if (s)
     {
-        if (!strlen(s))
+        if (!strlen(s) || s[0] == '\n')
         {
             return -1;
         }
@@ -83,9 +122,10 @@ void case_prolog_gen(char *s, long int cases, long int depth) // prolog of the s
     tabber(depth * 3 + 3, "");
     printf("case %lu :\n", cases);
     tabber(depth * 3 + 3, "{\n");
-    tabber(depth * 3 + 4, "");
+    // tabber(depth * 3 + 4, "");
     char *strip = string_strip(s);
-    printf("printf(\"%s\\n\");\n", strip);
+    // printf("printf(\"%s\\n\");\n", strip);
+    print_code(strip, depth);
     free(strip);
 }
 
@@ -100,7 +140,7 @@ char *coremenu_gen(char *s, long int depth) // the main recursive function which
     coremenu_prolog_gen(depth);       // prolog
     long int cases = 1;               // indicates the current switch case
     case_prolog_gen(s, cases, depth); // initially supplied with a line which is treated as the first case
-    memset(s,0,(MAX+1)*sizeof(char));
+    memset(s, 0, (MAX + 1) * sizeof(char));
     fgets(s, MAX, stdin);                           // reads the next line
     long int depth_check = depth_checker(s, depth); // finds the relative depth of the input line w.r.t to the current depth
     while (depth_check > 0)                         // while its not an ancestor or not a blank string
@@ -113,7 +153,7 @@ char *coremenu_gen(char *s, long int depth) // the main recursive function which
         {
             case_epilog_gen(s, cases++, depth); // close the previous switch case
             case_prolog_gen(s, cases, depth);   // open the new switch case
-            memset(s,0,(MAX+1)*sizeof(char));
+            memset(s, 0, (MAX + 1) * sizeof(char));
             fgets(s, MAX, stdin); // read the next input
         }
         depth_check = depth_checker(s, depth); // check depth

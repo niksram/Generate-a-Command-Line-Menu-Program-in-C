@@ -1,6 +1,6 @@
-patternfile=menu.dat
+patternfile=hello.dat
 menuinput=inputsequence.txt
-cfile=A1_PES1201801972_Tree.c
+cfile=A1_PES1201801972.c
 
 output.txt : output.out $(menuinput)
 	./output.out < $(menuinput) > output.txt
