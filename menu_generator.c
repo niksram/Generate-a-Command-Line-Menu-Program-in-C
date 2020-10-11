@@ -46,16 +46,15 @@ int main()
 
 void print_code(char *input, long int depth)
 {
-    char s[MAX + 1];
+    char s[MAX + 2];
     long int count = 0;
-    while (*input != '\0')
+    while (*input != '\0' && *input != '\n')
     {
-        if (*input == '\n')
-            s[count++] = '\\';
         s[count++] = *input;
         if (*input == ';')
         {
             s[count] = '\n';
+            s[count+1] = '\0'; 
             tabber(depth * 3 + 4, s);
             count = 0;
         }
@@ -122,9 +121,7 @@ void case_prolog_gen(char *s, long int cases, long int depth) // prolog of the s
     tabber(depth * 3 + 3, "");
     printf("case %lu :\n", cases);
     tabber(depth * 3 + 3, "{\n");
-    // tabber(depth * 3 + 4, "");
     char *strip = string_strip(s);
-    // printf("printf(\"%s\\n\");\n", strip);
     print_code(strip, depth);
     free(strip);
 }
